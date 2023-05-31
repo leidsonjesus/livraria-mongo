@@ -68,7 +68,7 @@ class CategoriaService:
         print('\nRemovendo categoria...')
 
         try:
-            categoria_id = int(input('Digite o ID da categoria para excluir: '))
+            categoria_id = input('Digite o ID da categoria para excluir: ')
             if (self.__categoria_dao.remover(categoria_id)):
                 print('Categoria excluída com sucesso!')
             else:
@@ -83,7 +83,7 @@ class CategoriaService:
         print('\nCategoria por Id...')
 
         try:
-            id = int(input('Digite o Id da categoria para buscar: '))
+            id = input('Digite o Id da categoria para buscar: ')
             cat = self.__categoria_dao.buscar_por_id(id)
 
             if (cat == None):

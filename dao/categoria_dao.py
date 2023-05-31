@@ -1,62 +1,47 @@
 from model.categoria import Categoria
-from database.conexao_factory import ConexaoFactory
+from database.client_factory import ClientFactory
+from bson import ObjectId
 
 class CategoriaDAO:
 
     def __init__(self):
-        self.__conexao_factory = ConexaoFactory()
+        self.__client_factory: ClientFactory = ClientFactory()
+        self.__categorias: list[Categoria] = list()
 
     def listar(self) -> list[Categoria]:
         categorias = list()
 
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT id, nome FROM categorias")
-        resultados = cursor.fetchall()
-        for result in resultados:
-            cat = Categoria(result[1])
-            cat.id = result[0]
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        for documento in db.categorias.find():
+            cat = Categoria(documento['nome'])
+            cat.id = documento['_id']
             categorias.append(cat)
-        cursor.close()
-        conexao.close()
+        client.close()
 
         return categorias
 
     def adicionar(self, categoria: Categoria) -> None:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("""
-                        INSERT INTO categorias (nome) VALUES (%(nome)s)
-                        """, 
-                        ({'nome': categoria.nome, }))
-        conexao.commit()
-        cursor.close()
-        conexao.close()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        db.categorias.insert_one({'nome': categoria.nome})
+        client.close()
 
     def remover(self, categoria_id: int) -> bool:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("DELETE FROM categorias WHERE id = %s", (categoria_id,))
-        
-        categorias_removidas = cursor.rowcount
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.categorias.delete_one({'_id': ObjectId(categoria_id)})
+        if (resultado.deleted_count == 1):
+            return True
+        return False
 
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-
-        if (categorias_removidas == 0):
-            return False
-        return True
-
-    def buscar_por_id(self, categoria_id) -> Categoria:
+    def buscar_por_id(self, categoria_id: str) -> Categoria:
         cat = None
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT id, nome FROM categorias WHERE id = %s", (categoria_id,))
-        resultado = cursor.fetchone()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.categorias.find_one({'_id': ObjectId(categoria_id)})
         if (resultado):
-            cat = Categoria(resultado[1])
-            cat.id = resultado[0]
-        cursor.close()
-        conexao.close()
+            cat = Categoria(resultado['nome'])
+            cat.id = resultado['_id']
+        client.close()
         return cat
