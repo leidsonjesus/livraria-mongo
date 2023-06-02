@@ -8,3 +8,5 @@ class ClientFactory:
         return MongoClient(
             'mongodb+srv://leidson:01Limite@cluster0.h3pv6bo.mongodb.net/?retryWrites=true&w=majority',
             server_api=ServerApi('1'))
+
+'''Necessario criar novo banco, pois eu deletei esse'''
