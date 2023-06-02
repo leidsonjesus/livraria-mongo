@@ -1,73 +1,57 @@
 from model.editora import Editora
-from database.conexao_factory import ConexaoFactory
+from database.client_factory import ClientFactory
+from bson import ObjectId
 
 class EditoraDAO:
 
     def __init__(self):
-        self.__conexao_factory = ConexaoFactory()
+        self.__client_factory: ClientFactory = ClientFactory()
 
     def listar(self) -> list[Editora]:
         editoras = list()
 
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT id, nome, endereco, telefone FROM editoras")
-        resultados = cursor.fetchall()
-        for result in resultados:
-            edt = Editora(result[1], result[2], result[3])
-            edt.id = result[0]
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        for documento in db.editoras.find():
+            edt = Editora(documento['nome'], documento['endereco'], 
+                          documento['telefone'])
+            edt.id = documento['_id']
             editoras.append(edt)
-        cursor.close()
-        conexao.close()
+        client.close()
 
         return editoras
 
     def adicionar(self, editora: Editora) -> None:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("""
-                        INSERT INTO editoras 
-                            (nome, endereco, telefone) 
-                        VALUES 
-                            (%(nome)s, %(endereco)s, %(telefone)s)
-                        """, 
-                        ({
-                            'nome': editora.nome, 
-                            'endereco': editora.endereco, 
-                            'telefone': editora.telefone, 
-                        })
-                        )
-        conexao.commit()
-        cursor.close()
-        conexao.close()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        db.editoras.insert_one({
+            'nome': editora.nome, 
+            'endereco': editora.endereco, 
+            'telefone': editora.telefone})
+        client.close()
 
-    def remover(self, editora_id: int) -> bool:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("DELETE FROM editoras WHERE id = %s", (editora_id,))
-        
-        editoras_removidas = cursor.rowcount
+    def remover(self, editora_id: str) -> bool:
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.editoras.delete_one({'_id': ObjectId(editora_id)})
+        if (resultado.deleted_count == 1):
+            return True
+        return False
 
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-
-        if (editoras_removidas == 0):
-            return False
-        return True
-
-    def buscar_por_id(self, editora_id) -> Editora:
+    def buscar_por_id(self, editora_id: str) -> Editora:
         edt = None
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("""
-                        SELECT id, nome, endereco, telefone 
-                        FROM editoras WHERE id = %s
-                        """, (editora_id,))
-        resultado = cursor.fetchone()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.editoras.find_one({'_id': ObjectId(editora_id)})
         if (resultado):
-            edt = Editora(resultado[1], resultado[2], resultado[3])
-            edt.id = resultado[0]
-        cursor.close()
-        conexao.close()
+            edt = Editora(resultado['nome'], resultado['endereco'], 
+                          resultado['telefone'])
+            edt.id = resultado['_id']
+        client.close()
         return edt
+    
+    def adicionar_muitos(self, lista_editoras: list[dict]):
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        db.editoras.insert_many(lista_editoras)
+        client.close()

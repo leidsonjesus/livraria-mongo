@@ -1,17 +1,19 @@
+from bson import ObjectId
+
 class Editora:
 
-    def __init__(self, nome: str, endereco: str, telefone: str): # alterado
-        self.__id: int = 0 # alterado
+    def __init__(self, nome: str, endereco: str, telefone: str):
+        self.__id: ObjectId = None
         self.__nome: str = nome
         self.__endereco: str = endereco
         self.__telefone: str = telefone
 
     @property
-    def id(self) -> int:
+    def id(self) -> ObjectId:
         return self.__id
 
     @id.setter
-    def id(self, id: int):
+    def id(self, id: ObjectId):
         self.__id = id
 
     @property
@@ -37,3 +39,10 @@ class Editora:
     @telefone.setter
     def telefone(self, telefone):
         self.__telefone = telefone
+
+    def dump(self) -> dict:
+        return {
+            'nome': self.__nome, 
+            'endereco': self.__endereco, 
+            'telefone': self.__telefone
+        }

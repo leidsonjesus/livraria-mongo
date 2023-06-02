@@ -71,7 +71,7 @@ class AutorService:
         print('\nRemovendo autor...')
 
         try:
-            autor_id = int(input('Digite o ID do autor para excluir: '))
+            autor_id = input('Digite o ID do autor para excluir: ')
             if (self.__autor_dao.remover(autor_id)):
                 print('Autor excluído com sucesso!')
             else:
@@ -86,7 +86,7 @@ class AutorService:
         print('\nAutor por Id...')
 
         try:
-            id = int(input('Digite o Id do autor para buscar: '))
+            id = input('Digite o Id do autor para buscar: ')
             aut = self.__autor_dao.buscar_por_id(id)
 
             if (aut == None):

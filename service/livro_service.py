@@ -71,12 +71,12 @@ class LivroService:
             for c in lista_categorias:
                 print(f'{c.id} | {c.nome}')
 
-            id_categoria = int(input('Digite o ID da categoria do livro: '))
+            id_categoria = input('Digite o ID da categoria do livro: ')
             categoria: Categoria = self.__categoria_dao.buscar_por_id(id_categoria)
 
             while(categoria == None):
                 print('Categoria não existente!')
-                id_categoria = int(input('Digite o ID da categoria do livro: '))
+                id_categoria = input('Digite o ID da categoria do livro: ')
                 categoria: Categoria = self.__categoria_dao.buscar_por_id(id_categoria)
 
             print('Editoras de Livro:')
@@ -84,12 +84,12 @@ class LivroService:
             for e in lista_editoras:
                 print(f'{e.id} | {e.nome}')
 
-            id_editora = int(input('Digite o ID da editora do livro: '))
+            id_editora = input('Digite o ID da editora do livro: ')
             editora: Editora = self.__editora_dao.buscar_por_id(id_editora)
 
             while(editora == None):
                 print('Editora não existente!')
-                id_editora = int(input('Digite o ID da editora do livro: '))
+                id_editora = input('Digite o ID da editora do livro: ')
                 editora: Editora = self.__editora_dao.buscar_por_id(id_editora)
 
             print('Autores de Livro:')
@@ -97,12 +97,12 @@ class LivroService:
             for a in lista_autores:
                 print(f'{a.id} | {a.nome}')
 
-            id_autor = int(input('Digite o ID do autor do livro: '))
+            id_autor = input('Digite o ID do autor do livro: ')
             autor: Autor = self.__autor_dao.buscar_por_id(id_autor)
 
             while(autor == None):
                 print('Autor não existente!')
-                id_autor = int(input('Digite o ID do autor do livro: '))
+                id_autor = input('Digite o ID do autor do livro: ')
                 autor: Autor = self.__autor_dao.buscar_por_id(id_autor)
 
             novo_livro = Livro(titulo, resumo, ano, paginas, isbn, categoria, editora, autor)
@@ -119,7 +119,7 @@ class LivroService:
         print('\nRemovendo livro...')
 
         try:
-            livro_id = int(input('Digite o ID do livro para excluir: '))
+            livro_id = input('Digite o ID do livro para excluir: ')
             if (self.__livro_dao.remover(livro_id)):
                 print('Livro excluído com sucesso!')
             else:
@@ -134,7 +134,7 @@ class LivroService:
         print('\nLivro por Id...')
 
         try:
-            id = int(input('Digite o Id do livro para buscar: '))
+            id = input('Digite o Id do livro para buscar: ')
             liv = self.__livro_dao.buscar_por_id(id)
 
             if (liv == None):

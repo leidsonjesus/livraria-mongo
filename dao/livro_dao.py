@@ -1,13 +1,18 @@
 from model.livro import Livro
-from database.conexao_factory import ConexaoFactory
+from database.client_factory import ClientFactory
 from dao.categoria_dao import CategoriaDAO
 from dao.editora_dao import EditoraDAO
 from dao.autor_dao import AutorDAO
+from model.categoria import Categoria
+from model.editora import Editora
+from model.autor import Autor
+from bson import ObjectId
 
 class LivroDAO:
 
-    def __init__(self, categoria_dao: CategoriaDAO, editora_dao: EditoraDAO, autor_dao: AutorDAO):
-        self.__conexao_factory = ConexaoFactory()
+    def __init__(self, categoria_dao: CategoriaDAO, editora_dao: EditoraDAO,
+                 autor_dao: AutorDAO):
+        self.__client_factory: ClientFactory = ClientFactory()
         self.__categoria_dao: CategoriaDAO = categoria_dao
         self.__editora_dao: EditoraDAO = editora_dao
         self.__autor_dao: AutorDAO = autor_dao
@@ -15,75 +20,57 @@ class LivroDAO:
     def listar(self) -> list[Livro]:
         livros = list()
 
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT id, titulo, resumo, ano, paginas, isbn, codigo, categoria_id, editora_id, autor_id FROM livros")
-        resultados = cursor.fetchall()
-        for result in resultados:
-            categoria = self.__categoria_dao.buscar_por_id(result[7])
-            editora = self.__editora_dao.buscar_por_id(result[8])
-            autor = self.__autor_dao.buscar_por_id(result[9])
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        for documento in db.livros.find():
+            categoria: Categoria = self.__categoria_dao.buscar_por_id(documento['categoria_id'])
+            editora: Editora = self.__editora_dao.buscar_por_id(documento['editora_id'])
+            autor: Autor = self.__autor_dao.buscar_por_id(documento['autor_id'])
 
-            liv = Livro(result[1], result[2], int(result[3]), int(result[4]), result[5], categoria, editora, autor)
-            liv.id = result[0]
-            liv.codigo = result[6]
+            liv = Livro(documento['titulo'], documento['resumo'], int(documento['ano']), 
+                  int(documento['paginas']), documento['isbn'],
+                  categoria, editora, autor)
+            liv.id = documento['_id']
+            liv.codigo = documento['codigo']
+
             livros.append(liv)
-        cursor.close()
-        conexao.close()
-        
+        client.close()
+
         return livros
 
     def adicionar(self, livro: Livro) -> None:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("""
-                        INSERT INTO livros
-                            (titulo, resumo, ano, paginas, isbn, codigo, categoria_id, editora_id, autor_id)
-                        VALUES
-                            (%(titulo)s, %(resumo)s, %(ano)s, %(paginas)s, %(isbn)s, %(codigo)s, %(categoria_id)s, %(editora_id)s, %(autor_id)s)
-                        """, 
-                        ({
-                            'titulo': livro.titulo, 'resumo': livro.resumo, 
-                            'ano': livro.ano, 'paginas': livro.paginas, 'isbn': livro.isbn, 
-                            'codigo': livro.codigo,
-                            'categoria_id': livro.categoria.id, 'editora_id': livro.editora.id, 
-                            'autor_id': livro.autor.id,
-                        }))
-        conexao.commit()
-        cursor.close()
-        conexao.close()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        db.livros.insert_one({
+            'titulo': livro.titulo, 'resumo': livro.resumo, 'ano': livro.ano,
+            'paginas': livro.paginas, 'isbn': livro.isbn, 'codigo': livro.codigo,
+            'categoria_id': livro.categoria.id, 'editora_id': livro.editora.id,
+            'autor_id': livro.autor.id
+        })
+        client.close()
 
-    def remover(self, livro_id: int) -> bool:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("DELETE FROM livros WHERE id = %s", (livro_id,))
-        livros_removidos = cursor.rowcount
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-        
-        if (livros_removidos == 0):
-            return False
-        return True
+    def remover(self, livro_id: str) -> bool:
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.livros.delete_one({'_id': ObjectId(livro_id)})
+        if (resultado.deleted_count == 1):
+            return True
+        return False
 
-    def buscar_por_id(self, livro_id) -> Livro:
+    def buscar_por_id(self, livro_id: str) -> Livro:
         liv = None
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        
-        cursor.execute("SELECT id, titulo, resumo, ano, paginas, isbn, codigo, categoria_id, editora_id, autor_id FROM livros WHERE id = %s", 
-                       (livro_id,))
-        resultado = cursor.fetchone()
-        
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.livros.find_one({'_id': ObjectId(livro_id)})
         if (resultado):
-            categoria = self.__categoria_dao.buscar_por_id(resultado[7])
-            editora = self.__editora_dao.buscar_por_id(resultado[8])
-            autor = self.__autor_dao.buscar_por_id(resultado[9])
+            categoria: Categoria = self.__categoria_dao.buscar_por_id(resultado['categoria_id'])
+            editora: Editora = self.__editora_dao.buscar_por_id(resultado['editora_id'])
+            autor: Autor = self.__autor_dao.buscar_por_id(resultado['autor_id'])
 
-            liv = Livro(resultado[1], resultado[2], int(resultado[3]), int(resultado[4]), resultado[5], categoria, editora, autor)
-            liv.id = resultado[0]
-            liv.codigo = resultado[6]
+            liv = Livro(resultado['titulo'], resultado['resumo'], int(resultado['ano']),
+                        int(resultado['paginas']), resultado['isbn'], 
+                        categoria, editora, autor)
+            liv.id = resultado['_id']
+            liv.codigo = resultado['codigo']
 
-        cursor.close()
-        conexao.close()
         return liv

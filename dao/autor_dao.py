@@ -1,74 +1,53 @@
 from model.autor import Autor
-from database.conexao_factory import ConexaoFactory
+from database.client_factory import ClientFactory
+from bson import ObjectId
 
 class AutorDAO:
 
     def __init__(self):
-        self.__conexao_factory = ConexaoFactory()
+        self.__client_factory: ClientFactory = ClientFactory()
 
     def listar(self) -> list[Autor]:
         autores = list()
 
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT id, nome, email, telefone, bio FROM autores")
-        resultados = cursor.fetchall()
-        for result in resultados:
-            aut = Autor(result[1], result[2], result[3], result[4])
-            aut.id = result[0]
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        for documento in db.autores.find():
+            aut = Autor(documento['nome'], documento['email'], 
+                          documento['telefone'], documento['bio'])
+            aut.id = documento['_id']
             autores.append(aut)
-        cursor.close()
-        conexao.close()
+        client.close()
 
         return autores
 
     def adicionar(self, autor: Autor) -> None:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("""
-                        INSERT INTO autores 
-                            (nome, email, telefone, bio) 
-                        VALUES 
-                            (%(nome)s, %(email)s, %(telefone)s, %(bio)s)
-                        """, 
-                        ({
-                            'nome': autor.nome, 
-                            'email': autor.email, 
-                            'telefone': autor.telefone, 
-                            'bio': autor.bio,
-                        })
-                        )
-        conexao.commit()
-        cursor.close()
-        conexao.close()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        db.autores.insert_one({
+            'nome': autor.nome, 
+            'email': autor.email, 
+            'telefone': autor.telefone,
+            'bio': autor.bio})
+        client.close()
 
-    def remover(self, autor_id: int) -> bool:
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("DELETE FROM autores WHERE id = %s", (autor_id,))
-        
-        autores_removidos = cursor.rowcount
+    def remover(self, autor_id: str) -> bool:
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.autores.delete_one({'_id': ObjectId(autor_id)})
+        if (resultado.deleted_count == 1):
+            return True
+        return False
 
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-
-        if (autores_removidos == 0):
-            return False
-        return True
-
-    def buscar_por_id(self, autor_id) -> Autor:
+    def buscar_por_id(self, autor_id: str) -> Autor:
         aut = None
-        conexao = self.__conexao_factory.get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute("""
-                        SELECT id, nome, email, telefone, bio
-                        FROM autores WHERE id = %s
-                        """, (autor_id,))
-        resultado = cursor.fetchone()
+        client = self.__client_factory.get_client()
+        db = client.livraria
+        resultado = db.autores.find_one({'_id': ObjectId(autor_id)})
         if (resultado):
-            aut = Autor(resultado[1], resultado[2], resultado[3], resultado[4])
-            aut.id = resultado[0]
-        cursor.close()
-        conexao.close()
+            aut = Autor(resultado['nome'], resultado['email'], 
+                          resultado['telefone'], resultado['bio'])
+            aut.id = resultado['_id']
+        client.close()
         return aut
+    

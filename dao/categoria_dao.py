@@ -6,7 +6,6 @@ class CategoriaDAO:
 
     def __init__(self):
         self.__client_factory: ClientFactory = ClientFactory()
-        self.__categorias: list[Categoria] = list()
 
     def listar(self) -> list[Categoria]:
         categorias = list()
@@ -27,7 +26,7 @@ class CategoriaDAO:
         db.categorias.insert_one({'nome': categoria.nome})
         client.close()
 
-    def remover(self, categoria_id: int) -> bool:
+    def remover(self, categoria_id: str) -> bool:
         client = self.__client_factory.get_client()
         db = client.livraria
         resultado = db.categorias.delete_one({'_id': ObjectId(categoria_id)})

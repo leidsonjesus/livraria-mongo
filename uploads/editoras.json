@@ -1,0 +1,17 @@
+[
+   {
+      "nome":"HarperCollins",
+      "endereco":"Rua 12 de Outubro, 327 - São Joaquim / Teresina - PI 64004-070",
+      "telefone":"(47) 98957-7895"
+   },
+   {
+      "nome":"Editora Aleph",
+      "endereco":"Beco Um, 426 - Aberta dos Morros / Porto Alegre - RS 91751-356",
+      "telefone":"(86) 3950-8740"
+   },
+   {
+      "nome":"Editora Arqueiro",
+      "endereco":"Rua das camelias, 25 - Centro / Fortaleza - CE",
+      "telefone":"(88) 8185-0259"
+   }
+]

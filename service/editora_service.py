@@ -1,5 +1,6 @@
 from dao.editora_dao import EditoraDAO
 from model.editora import Editora
+from utils import editoras_csv, editoras_json
 
 class EditoraService:
 
@@ -16,6 +17,10 @@ class EditoraService:
                 '2 - Adicionar nova editora\n'
                 '3 - Excluir editora\n'
                 '4 - Ver categoria por Id\n'
+                '5 - Inserir dados do CSV\n'
+                '6 - Gerar CSV de editoras\n'
+                '7 - Inserir dados do JSON\n'
+                '8 - Gerar JSON de editoras\n'
                 '0 - Voltar ao menu anterior\n')
         escolha = input('Digite a opção: ')
 
@@ -29,6 +34,14 @@ class EditoraService:
             self.remover()
         elif escolha == '4':
             self.mostrar_por_id()
+        elif escolha == '5':
+            self.inserir_csv()
+        elif escolha == '6':
+            self.gerar_csv()
+        elif escolha == '7':
+            self.inserir_json()
+        elif escolha == '8':
+            self.gerar_json()
         else:
             print('Opção inválida! Por favor, tente novamente!')
 
@@ -71,7 +84,7 @@ class EditoraService:
         print('\nRemovendo editora...')
 
         try:
-            editora_id = int(input('Digite o ID da excluir para excluir: '))
+            editora_id = input('Digite o ID da excluir para excluir: ')
             if (self.__editora_dao.remover(editora_id)):
                 print('Editora excluída com sucesso!')
             else:
@@ -86,7 +99,7 @@ class EditoraService:
         print('\Editora por Id...')
 
         try:
-            id = int(input('Digite o Id da editora para buscar: '))
+            id = input('Digite o Id da editora para buscar: ')
             edt = self.__editora_dao.buscar_por_id(id)
 
             if (edt == None):
@@ -96,5 +109,61 @@ class EditoraService:
         except Exception as e:
             print(f'Erro ao exibir editora! - {e}')
             return     
+        
+        input('Pressione uma tecla para continuar...')
+
+    def inserir_csv(self):
+        print('Inserirndo editoras CSV...')
+
+        try:
+            nome_arquivo = input('Digite o nome do arquivo CSV: ')
+            lista_editoras = editoras_csv.ler_csv_e_gera_uma_lista_de_dict(nome_arquivo)
+            self.__editora_dao.adicionar_muitos(lista_editoras)
+            print('Editoras do CSV adicionandas com sucesso!')
+        except Exception as e:
+            print(f'Erro ao inserir editoras do CSV! - {e}')
+            return
+        
+        input('Pressione uma tecla para continuar...')
+
+    def gerar_csv(self):
+        print('Gerando CSV de editoras...')
+
+        try:
+            nome_novo_csv = input('Digite o nome do novo arquivo CSV: ')
+            lista_de_editoras: list[Editora] = self.__editora_dao.listar()
+            editoras_csv.criando_csv_usando_lista_de_editoras(lista_de_editoras, nome_novo_csv)
+            print('Novo CSV de editoras gerado com sucesso!')
+        except Exception as e:
+            print(f'Erro ao gerar CSV de editoras! - {e}')
+            return
+        
+        input('Pressione uma tecla para continuar...')
+
+    def inserir_json(self):
+        print('Inserirndo editoras JSON...')
+
+        try:
+            nome_arquivo = input('Digite o nome do arquivo JSON: ')
+            lista_dict_editoras = editoras_json.ler_json(nome_arquivo)
+            self.__editora_dao.adicionar_muitos(lista_dict_editoras)
+            print('Editoras do JSON adicionandas com sucesso!')
+        except Exception as e:
+            print(f'Erro ao inserir editoras do JSON! - {e}')
+            return
+        
+        input('Pressione uma tecla para continuar...')
+    
+    def gerar_json(self):
+        print('Gerando JSON de editoras...')
+
+        try:
+            nome_novo_json = input('Digite o nome do novo arquivo JSON: ')
+            lista_de_editoras: list[Editora] = self.__editora_dao.listar()
+            editoras_json.criando_json_usando_lista_de_editoras(lista_de_editoras, nome_novo_json)
+            print('Novo JSON de editoras gerado com sucesso!')
+        except Exception as e:
+            print(f'Erro ao gerar JSON de editoras! - {e}')
+            return
         
         input('Pressione uma tecla para continuar...')

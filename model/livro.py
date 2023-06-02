@@ -1,14 +1,14 @@
-import random
-import string
-
 from model.categoria import Categoria
 from model.editora import Editora
 from model.autor import Autor
+from bson import ObjectId
+import random
+import string
 
 class Livro:
 
     def __init__(self, titulo: str, resumo: str, ano: int, paginas: int, isbn: str, categoria: Categoria, editora: Editora, autor: Autor):
-        self.__id: int = 0
+        self.__id: ObjectId = None
         self.__titulo: str = titulo
         self.__resumo: str = resumo
         self.__ano: int = ano
@@ -20,11 +20,11 @@ class Livro:
         self.__autor: Autor = autor
 
     @property
-    def id(self) -> int:
+    def id(self) -> ObjectId:
         return self.__id
     
     @id.setter
-    def id(self, id: int):
+    def id(self, id: ObjectId):
         self.__id = id
 
     @property
